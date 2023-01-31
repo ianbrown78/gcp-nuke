@@ -7,6 +7,7 @@ import (
 	"golang.org/x/sync/syncmap"
 	"google.golang.org/api/storage/v1"
 	"log"
+	"strings"
 	"sync"
 )
 
@@ -56,7 +57,14 @@ func (c *StorageBuckets) List(refreshCache bool) []string {
 	bucketsListCall := c.serviceClient.Buckets.List(c.base.config.Project)
 	bucketsList, err := bucketsListCall.Do()
 	if err != nil {
-		log.Fatal(err)
+		// check if the API is enabled/
+		if strings.Contains(err.Error(), "API has not been used in project") {
+			log.Println("Storage API not enabled. Skipping.")
+			return c.ToSlice()
+		} else {
+			// Otherwise, throw an error.
+			log.Fatal(err)
+		}
 	}
 
 	for _, instance := range bucketsList.Items {
