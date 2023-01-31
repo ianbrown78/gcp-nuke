@@ -31,12 +31,12 @@ func init() {
 	register(&sqlResource)
 }
 
-// Name - Name of the resourceLister for ComputeInstances
+// Name - Name of the resourceLister for SqlInstances
 func (c *SqlInstances) Name() string {
 	return "SqlInstances"
 }
 
-// ToSlice - Name of the resourceLister for ComputeInstances
+// ToSlice - Name of the resourceLister for SqlInstances
 func (c *SqlInstances) ToSlice() (slice []string) {
 	return helpers.SortedSyncMapKeys(&c.resourceMap)
 
@@ -47,7 +47,7 @@ func (c *SqlInstances) Setup(config config.Config) {
 	c.base.config = config
 }
 
-// List - Returns a list of all ComputeInstances
+// List - Returns a list of all SqlInstances
 func (c *SqlInstances) List(refreshCache bool) []string {
 	if !refreshCache {
 		return c.ToSlice()

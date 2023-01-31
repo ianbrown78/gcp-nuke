@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-// SqlInstances -
+// StorageBuckets -
 type StorageBuckets struct {
 	serviceClient *storage.Service
 	base          ResourceBase
@@ -28,12 +28,12 @@ func init() {
 	register(&storageResource)
 }
 
-// Name - Name of the resourceLister for ComputeInstances
+// Name - Name of the resourceLister for StorageBuckets
 func (c *StorageBuckets) Name() string {
 	return "SqlInstances"
 }
 
-// ToSlice - Name of the resourceLister for ComputeInstances
+// ToSlice - Name of the resourceLister for StorageBuckets
 func (c *StorageBuckets) ToSlice() (slice []string) {
 	return helpers.SortedSyncMapKeys(&c.resourceMap)
 
