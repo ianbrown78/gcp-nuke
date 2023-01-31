@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/arehmandev/gcp-nuke/config"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/compute/v1"
 )
 
@@ -56,11 +55,7 @@ func GetResourceMap(config config.Config) map[string]Resource {
 // GetZones -
 func GetZones(defaultContext context.Context, project string) []string {
 	log.Println("[Info] Retrieving zones for project:", project)
-	client, err := google.DefaultClient(defaultContext, compute.ComputeScope)
-	if err != nil {
-		log.Fatal(err)
-	}
-	serviceClient, err := compute.New(client)
+	serviceClient, err := compute.NewService(defaultContext)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,11 +76,7 @@ func GetZones(defaultContext context.Context, project string) []string {
 // GetRegions -
 func GetRegions(defaultContext context.Context, project string) []string {
 	log.Println("[Info] Retrieving regions for project:", project)
-	client, err := google.DefaultClient(defaultContext, compute.ComputeScope)
-	if err != nil {
-		log.Fatal(err)
-	}
-	serviceClient, err := compute.New(client)
+	serviceClient, err := compute.NewService(defaultContext)
 	if err != nil {
 		log.Fatal(err)
 	}
