@@ -30,7 +30,7 @@ func init() {
 
 // Name - Name of the resourceLister for StorageBuckets
 func (c *StorageBuckets) Name() string {
-	return "SqlInstances"
+	return "StorageBuckets"
 }
 
 // ToSlice - Name of the resourceLister for StorageBuckets
