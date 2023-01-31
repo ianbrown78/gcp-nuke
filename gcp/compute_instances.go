@@ -61,7 +61,14 @@ func (c *ComputeInstances) List(refreshCache bool) []string {
 		instanceListCall := c.serviceClient.Instances.List(c.base.config.Project, zone)
 		instanceList, err := instanceListCall.Do()
 		if err != nil {
-			log.Fatal(err)
+			// check if the API is enabled/
+			if strings.Contains(err.Error(), "API has not been used in project") {
+				log.Println("Compute Engine API not enabled. Skipping.")
+				return c.ToSlice()
+			} else {
+				// Otherwise, throw an error.
+				log.Fatal(err)
+			}
 		}
 
 		for _, instance := range instanceList.Items {
