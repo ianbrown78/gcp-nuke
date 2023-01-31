@@ -42,7 +42,7 @@ func RemoveProject(config config.Config) {
 		log.Fatal(err)
 	}
 
-	log.Printf("-- Deletion complete for project %v (dry-run: %v) --\n", config.Project, config.DryRun)
+	log.Printf("-- Deletion complete for project %v (dry-run: %v) (keep-project: %v) --\n", config.Project, config.DryRun, config.KeepProject)
 }
 
 func parallelResourceDeletion(resourceMap map[string]Resource, resource Resource, config config.Config) error {
