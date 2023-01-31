@@ -3,6 +3,7 @@ package gcp
 import (
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/arehmandev/gcp-nuke/helpers"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/syncmap"
-	"google.golang.org/api/sqladmin/v1"
+	"google.golang.org/api/sqladmin/v1beta4"
 )
 
 // SqlInstances -
@@ -55,19 +56,22 @@ func (c *SqlInstances) List(refreshCache bool) []string {
 	// Refresh resource map
 	c.resourceMap = sync.Map{}
 
-	for _, zone := range c.base.config.Zones {
-		instanceListCall := c.serviceClient.Instances.List(c.base.config.Project)
-		instanceList, err := instanceListCall.Do()
-		if err != nil {
+	instanceListCall := c.serviceClient.Instances.List(c.base.config.Project)
+	instanceList, err := instanceListCall.Do()
+	if err != nil {
+		// check if the API is enabled/
+		if strings.Contains(err.Error(), "API has not been used in project") {
+			log.Printf("SQLAdmin API not enabled in project %v. Skipping.", c.base.config.Project)
+			return c.ToSlice()
+		} else {
+			// Otherwise, throw an error.
 			log.Fatal(err)
 		}
+	}
 
-		for _, instance := range instanceList.Items {
-			instanceResource := DefaultResourceProperties{
-				zone: zone,
-			}
-			c.resourceMap.Store(instance.Name, instanceResource)
-		}
+	for _, instance := range instanceList.Items {
+		instanceResource := DefaultResourceProperties{}
+		c.resourceMap.Store(instance.Name, instanceResource)
 	}
 	return c.ToSlice()
 }
