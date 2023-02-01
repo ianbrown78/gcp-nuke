@@ -6,7 +6,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/syncmap"
 	"google.golang.org/api/bigquery/v2"
-	"google.golang.org/api/option"
 	"log"
 	"strings"
 	"sync"
@@ -20,7 +19,7 @@ type BigQueryDatasets struct {
 }
 
 func init() {
-	bigqueryService, err := bigquery.NewService(Ctx, option.WithScopes(bigquery.DevstorageReadWriteScope))
+	bigqueryService, err := bigquery.NewService(Ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,7 +69,7 @@ func (c *BigQueryDatasets) List(refreshCache bool) []string {
 
 	for _, dataset := range datasetsList.Datasets {
 		instanceResource := DefaultResourceProperties{}
-		c.resourceMap.Store(dataset.FriendlyName, instanceResource)
+		c.resourceMap.Store(dataset.DatasetReference, instanceResource)
 	}
 
 	return c.ToSlice()
