@@ -1,9 +1,4 @@
-# Gcp-Nuke
-
-**Beware, only members and personnel of Area 51 are allowed past this point.**
-
-<img src="https://github.com/arehmandev/gcp-nuke/blob/master/nuclear.png?raw=true" height="250" width="250"><img src="https://github.com/arehmandev/gcp-nuke/blob/master/nuclear.png?raw=true" height="250" width="250"><img src="https://github.com/arehmandev/gcp-nuke/blob/master/nuclear.png?raw=true" height="250" width="250">
-
+# GCP-Nuke
 
 ## Background
 
@@ -26,7 +21,7 @@ NAME:
    gcp-nuke - The GCP project cleanup tool with added radiation
 
 USAGE:
-   e.g. gcp-nuke --project test-nuke-123456 --dryrun
+   e.g. gcp-nuke --project test-nuke-123456 --dryrun --keep-project
 
 VERSION:
    v0.1.0
@@ -39,6 +34,7 @@ GLOBAL OPTIONS:
    --dryrun          Perform a dryrun instead (default: false)
    --timeout value   Timeout for removal of a single resource in seconds (default: 400)
    --polltime value  Time for polling resource deletion status in seconds (default: 10)
+   --keep-project    Keep the project, just destroy the resources.
    --help, -h        show help (default: false)
    --version, -v     print the version (default: false)
 ```
@@ -70,13 +66,9 @@ Example dryrun
 ```
 
 ## Roadmap
-- Add removal of VPC, subnets, CloudDNS resources and SharedVPC associations
-- Add option to cleanup peerings at connecting projects
-- Add unit tests and create a pipeline for robust integration test cases
-- DRY - unfortunately due to the lack of generics in Go, I feel much of the code feels replicated among resources, lets come up with an idiomatic solution
-- More reliable Dependencies and errors - Currently each resource can supply a list of dependent resources to remove first, however this always work as planned,
-- Add logging lib, colours and verbosity levels
-- Add dry-run report creation
-- Discuss behaviour of deleting projects in parallel - currently resources are deleted in parallel
-- Add a small video clip of cli usage
-- Add contributing guide
+- Add BigQuery
+- Add CloudKMS & Secrets Manager
+- Add DataFlow
+- Add Cloud Functions
+- Add Cloud Run
+- Migrate from urfave/cli to spf13/cobra
