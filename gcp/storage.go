@@ -95,13 +95,24 @@ func (c *StorageBuckets) Remove() error {
 		bucket, _ := bucketCall.Do()
 		policy := bucket.RetentionPolicy
 
-		if policy.IsLocked {
+		log.Printf("Removing bucket %v", bucketID)
+		if policy != nil && policy.IsLocked == true {
 			// throw an error about the bucket being locked.
-			log.Fatalf("Bucket %v has a bucket policy that is currently locked.", bucketID)
+			log.Printf("Bucket %v has a bucket policy that is currently locked.", bucketID)
+			return true
 		}
-		if policy.RetentionPeriod > 0 {
+		if policy != nil && policy.RetentionPeriod > 0 {
 			// throw an error about the retention policy being not zero.
-			log.Fatalf("Bucket %v has a bucket policy retention period of %v seconds.", bucketID, policy.RetentionPeriod)
+			log.Printf("Bucket %v has a bucket policy retention period of %v seconds.", bucketID, policy.RetentionPeriod)
+			log.Printf("Bucket %v retention policy will be updated to 0 seconds.", bucketID, policy.RetentionPeriod)
+
+			bucket, _ := c.serviceClient.Buckets.Get(bucketID).Do()
+			bucket.RetentionPolicy.RetentionPeriod = 0
+			bucketUpdateCall := c.serviceClient.Buckets.Patch(bucketID, bucket)
+			_, err := bucketUpdateCall.Do()
+			if err != nil {
+				return false
+			}
 		}
 
 		// Parallel instance deletion
