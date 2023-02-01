@@ -66,7 +66,9 @@ Example dryrun
 ```
 
 ## Roadmap
-- Add BigQuery
+- Add CloudSQL (DONE)
+- Add Cloud Storage (DONE)
+- Add BigQuery (DONE)
 - Add CloudKMS & Secrets Manager
 - Add DataFlow
 - Add Cloud Functions
