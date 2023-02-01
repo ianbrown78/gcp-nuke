@@ -69,7 +69,8 @@ Example dryrun
 - Add CloudSQL (DONE)
 - Add Cloud Storage (DONE)
 - Add BigQuery (DONE)
-- Add CloudKMS & Secrets Manager
+- Add CloudKMS 
+- Add Secrets Manager (DONE)
 - Add DataFlow
 - Add Cloud Functions
 - Add Cloud Run
