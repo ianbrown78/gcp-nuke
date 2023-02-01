@@ -54,11 +54,12 @@ func (c *SecretManagerSecrets) List(refreshCache bool) []string {
 	c.resourceMap = sync.Map{}
 
 	// List all buckets in a project
-	secretsListCall := c.serviceClient.Projects.Secrets.List(c.base.config.Project)
+	secretsListCall := c.serviceClient.Projects.Secrets.List("projects/" + c.base.config.Project)
 	secretsList, err := secretsListCall.Do()
 	if err != nil {
 		// check if the API is enabled/
-		if strings.Contains(err.Error(), "API has not been used in project") {
+		if strings.Contains(err.Error(), "API has not been used in project") ||
+			strings.Contains(err.Error(), "got HTTP response code 404") {
 			log.Println("SecretManager API not enabled. Skipping.")
 			return c.ToSlice()
 		} else {
