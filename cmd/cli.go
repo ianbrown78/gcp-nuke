@@ -23,8 +23,8 @@ func Command() {
 				Required: true,
 			},
 			&cli.BoolFlag{
-				Name:  "dryrun, d",
-				Usage: "Perform a dryrun instead",
+				Name:  "no-dryrun, d",
+				Usage: "Do not perform a dryrun",
 			},
 			&cli.IntFlag{
 				Name:  "timeout, t",
@@ -46,7 +46,7 @@ func Command() {
 			// Behaviour to delete all resource in parallel in one project at a time - will be made into loop / concurrenct project nuke if required
 			config := config.Config{
 				Project:     c.String("project"),
-				DryRun:      c.Bool("dryrun"),
+				NoDryRun:    c.Bool("no-dryrun"),
 				Timeout:     c.Int("timeout"),
 				PollTime:    c.Int("polltime"),
 				KeepProject: c.Bool("keep-project"),
@@ -54,7 +54,7 @@ func Command() {
 				Zones:       gcp.GetZones(gcp.Ctx, c.String("project")),
 				Regions:     gcp.GetRegions(gcp.Ctx, c.String("project")),
 			}
-			log.Printf("[Info] Timeout %v seconds. Polltime %v seconds. Dry run: %v", config.Timeout, config.PollTime, config.DryRun)
+			log.Printf("[Info] Timeout %v seconds. Polltime %v seconds. Dry run: %v", config.Timeout, config.PollTime, config.NoDryRun)
 			gcp.RemoveProject(config)
 
 			return nil
