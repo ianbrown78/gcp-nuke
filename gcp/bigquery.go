@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-// BigQuery -
+// BigQueryDatasets -
 type BigQueryDatasets struct {
 	serviceClient *bigquery.Service
 	base          ResourceBase
@@ -58,12 +58,12 @@ func (c *BigQueryDatasets) List(refreshCache bool) []string {
 	datasetsList, err := datasetsListCall.Do()
 	if err != nil {
 		// check if the API is enabled/
-		if strings.Contains(err.Error(), "API has not been used in project") {
-			log.Println("BigQuery API not enabled. Skipping.")
-			return c.ToSlice()
-		} else {
+		if !strings.Contains(err.Error(), "API has not been used in project") {
 			// Otherwise, throw an error.
 			log.Fatal(err)
+		} else {
+			log.Println("BigQuery API not enabled. Skipping.")
+			return c.ToSlice()
 		}
 	}
 

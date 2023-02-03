@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-// SecretManager -
+// SecretManagerSecrets -
 type SecretManagerSecrets struct {
 	serviceClient *secretmanager.Service
 	base          ResourceBase
@@ -58,13 +58,13 @@ func (c *SecretManagerSecrets) List(refreshCache bool) []string {
 	secretsList, err := secretsListCall.Do()
 	if err != nil {
 		// check if the API is enabled/
-		if strings.Contains(err.Error(), "API has not been used in project") ||
-			strings.Contains(err.Error(), "got HTTP response code 404") {
-			log.Println("SecretManager API not enabled. Skipping.")
-			return c.ToSlice()
-		} else {
+		if !strings.Contains(err.Error(), "API has not been used in project") ||
+			!strings.Contains(err.Error(), "got HTTP response code 404") {
 			// Otherwise, throw an error.
 			log.Fatal(err)
+		} else {
+			log.Println("SecretManager API not enabled. Skipping.")
+			return c.ToSlice()
 		}
 	}
 

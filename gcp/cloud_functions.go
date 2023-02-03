@@ -61,12 +61,12 @@ func (c *FunctionsInstances) List(refreshCache bool) []string {
 	locationsList, err := locationsListCall.Do()
 	if err != nil {
 		// check if the API is enabled/
-		if strings.Contains(err.Error(), "API has not been used in project") {
-			log.Printf("SQLAdmin API not enabled in project %v. Skipping.", c.base.config.Project)
-			return c.ToSlice()
-		} else {
+		if !strings.Contains(err.Error(), "API has not been used in project") {
 			// Otherwise, throw an error.
 			log.Fatal(err)
+		} else {
+			log.Printf("SQLAdmin API not enabled in project %v. Skipping.", c.base.config.Project)
+			return c.ToSlice()
 		}
 	}
 

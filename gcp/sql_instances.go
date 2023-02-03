@@ -14,8 +14,8 @@ import (
 	"google.golang.org/api/sqladmin/v1beta4"
 )
 
-// SqlInstances -
-type SqlInstances struct {
+// SQLInstances -
+type SQLInstances struct {
 	serviceClient *sqladmin.Service
 	base          ResourceBase
 	resourceMap   syncmap.Map
@@ -26,30 +26,30 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	sqlResource := SqlInstances{
+	sqlResource := SQLInstances{
 		serviceClient: sqlService,
 	}
 	register(&sqlResource)
 }
 
 // Name - Name of the resourceLister for SqlInstances
-func (c *SqlInstances) Name() string {
+func (c *SQLInstances) Name() string {
 	return "SqlInstances"
 }
 
 // ToSlice - Name of the resourceLister for SqlInstances
-func (c *SqlInstances) ToSlice() (slice []string) {
+func (c *SQLInstances) ToSlice() (slice []string) {
 	return helpers.SortedSyncMapKeys(&c.resourceMap)
 
 }
 
 // Setup - populates the struct
-func (c *SqlInstances) Setup(config config.Config) {
+func (c *SQLInstances) Setup(config config.Config) {
 	c.base.config = config
 }
 
 // List - Returns a list of all SqlInstances
-func (c *SqlInstances) List(refreshCache bool) []string {
+func (c *SQLInstances) List(refreshCache bool) []string {
 	if !refreshCache {
 		return c.ToSlice()
 	}
@@ -60,12 +60,12 @@ func (c *SqlInstances) List(refreshCache bool) []string {
 	instanceList, err := instanceListCall.Do()
 	if err != nil {
 		// check if the API is enabled/
-		if strings.Contains(err.Error(), "API has not been used in project") {
-			log.Printf("SQLAdmin API not enabled in project %v. Skipping.", c.base.config.Project)
-			return c.ToSlice()
-		} else {
+		if !strings.Contains(err.Error(), "API has not been used in project") {
 			// Otherwise, throw an error.
 			log.Fatal(err)
+		} else {
+			log.Printf("SQLAdmin API not enabled in project %v. Skipping.", c.base.config.Project)
+			return c.ToSlice()
 		}
 	}
 
@@ -80,12 +80,12 @@ func (c *SqlInstances) List(refreshCache bool) []string {
 }
 
 // Dependencies - Returns a List of resource names to check for
-func (c *SqlInstances) Dependencies() []string {
+func (c *SQLInstances) Dependencies() []string {
 	return []string{}
 }
 
 // Remove -
-func (c *SqlInstances) Remove() error {
+func (c *SQLInstances) Remove() error {
 
 	// Removal logic
 	errs, _ := errgroup.WithContext(c.base.config.Context)

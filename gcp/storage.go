@@ -58,12 +58,12 @@ func (c *StorageBuckets) List(refreshCache bool) []string {
 	bucketsList, err := bucketsListCall.Do()
 	if err != nil {
 		// check if the API is enabled/
-		if strings.Contains(err.Error(), "API has not been used in project") {
-			log.Println("Storage API not enabled. Skipping.")
-			return c.ToSlice()
-		} else {
+		if !strings.Contains(err.Error(), "API has not been used in project") {
 			// Otherwise, throw an error.
 			log.Fatal(err)
+		} else {
+			log.Println("Storage API not enabled. Skipping.")
+			return c.ToSlice()
 		}
 	}
 
