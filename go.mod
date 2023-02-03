@@ -1,4 +1,4 @@
-module github.com/arehmandev/gcp-nuke
+module github.com/ianbrown78/gcp-nuke
 
 go 1.19
 

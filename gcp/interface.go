@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/arehmandev/gcp-nuke/config"
+	"github.com/ianbrown78/gcp-nuke/config"
 	"google.golang.org/api/compute/v1"
 )
 

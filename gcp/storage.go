@@ -1,8 +1,8 @@
 package gcp
 
 import (
-	"github.com/arehmandev/gcp-nuke/config"
-	"github.com/arehmandev/gcp-nuke/helpers"
+	"github.com/ianbrown78/gcp-nuke/config"
+	"github.com/ianbrown78/gcp-nuke/helpers"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/syncmap"
 	"google.golang.org/api/storage/v1"

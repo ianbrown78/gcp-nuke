@@ -1,6 +1,6 @@
 package main
 
-import "github.com/arehmandev/gcp-nuke/cmd"
+import "github.com/ianbrown78/gcp-nuke/cmd"
 
 func main() {
 	cmd.Command()
