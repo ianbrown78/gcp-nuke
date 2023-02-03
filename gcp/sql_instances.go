@@ -103,7 +103,7 @@ func (c *SqlInstances) Remove() error {
 				instanceCall := c.serviceClient.Instances.Get(c.base.config.Project, instanceID)
 				instance, err := instanceCall.Do()
 				if err != nil {
-					log.Fatal("Could not get CloudSQL instance %v", instanceID)
+					log.Fatalf("Could not get CloudSQL instance %v", instanceID)
 				}
 
 				instance.Settings.DeletionProtectionEnabled = false

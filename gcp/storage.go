@@ -104,7 +104,7 @@ func (c *StorageBuckets) Remove() error {
 		if policy != nil && policy.RetentionPeriod > 0 {
 			// throw an error about the retention policy being not zero.
 			log.Printf("Bucket %v has a bucket policy retention period of %v seconds.", bucketID, policy.RetentionPeriod)
-			log.Printf("Bucket %v retention policy will be updated to 0 seconds.", bucketID, policy.RetentionPeriod)
+			log.Printf("Bucket %v retention policy will be updated to 0 seconds.", bucketID)
 
 			bucket, _ := c.serviceClient.Buckets.Get(bucketID).Do()
 			bucket.RetentionPolicy.RetentionPeriod = 0
