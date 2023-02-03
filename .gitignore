@@ -1,2 +1,5 @@
 gcp-nuke*
+/vendor/
+/dist/
+/mocks/
 .idea/
