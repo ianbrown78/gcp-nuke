@@ -31,7 +31,7 @@ COMMANDS:
 
 GLOBAL OPTIONS:
    --project value   GCP project id to nuke (required)
-   --dryrun          Perform a dryrun instead (default: false)
+   --no-dryrun       Do not perform a dryrun (default: false)
    --timeout value   Timeout for removal of a single resource in seconds (default: 400)
    --polltime value  Time for polling resource deletion status in seconds (default: 10)
    --keep-project    Keep the project, just destroy the resources.
@@ -42,7 +42,7 @@ GLOBAL OPTIONS:
 Example dryrun
 
 ```
-./gcp-nuke --project test-nuke-123456 --dryrun
+./gcp-nuke --project test-nuke-123456
 2019/12/23 13:53:14 [Info] Retrieving zones for project: test-nuke-123456
 2019/12/23 13:53:14 [Info] Retrieving regions for project: test-nuke-123456
 2019/12/23 13:53:15 [Info] Timeout 400 seconds. Polltime 10 seconds. Dry run :true
