@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/arehmandev/gcp-nuke/config"
-	"github.com/arehmandev/gcp-nuke/helpers"
+	"github.com/ianbrown78/gcp-nuke/config"
+	"github.com/ianbrown78/gcp-nuke/helpers"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/syncmap"
 	"google.golang.org/api/sqladmin/v1beta4"
@@ -108,10 +108,29 @@ func (c *SqlInstances) Remove() error {
 
 				instance.Settings.DeletionProtectionEnabled = false
 				instanceUpdateCall := c.serviceClient.Instances.Update(c.base.config.Project, instance.Name, instance)
-				_, err = instanceUpdateCall.Do()
+				updateOp, err := instanceUpdateCall.Do()
 				if err != nil {
 					log.Fatal(err)
 				}
+				var updateOpStatus string
+				seconds := 0
+				for updateOpStatus != "DONE" {
+					log.Printf("[Info] Removing deletion protection for %v (%v seconds)", instanceID, seconds)
+
+					operationCall := c.serviceClient.Operations.Get(c.base.config.Project, updateOp.Name)
+					checkOpp, err := operationCall.Do()
+					if err != nil {
+						return err
+					}
+					updateOpStatus = checkOpp.Status
+
+					time.Sleep(time.Duration(c.base.config.PollTime) * time.Second)
+					seconds += c.base.config.PollTime
+					if seconds > c.base.config.Timeout {
+						return fmt.Errorf("[Error] Resource deletionprotection removal timed out for %v (%v seconds)", instanceID, c.base.config.Timeout)
+					}
+				}
+				log.Printf("[Info] Deletion protection removal completed for %v (%v seconds)", instanceID, seconds)
 			}
 
 			deleteCall := c.serviceClient.Instances.Delete(c.base.config.Project, instanceID)
