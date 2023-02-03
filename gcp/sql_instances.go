@@ -70,7 +70,10 @@ func (c *SqlInstances) List(refreshCache bool) []string {
 	}
 
 	for _, instance := range instanceList.Items {
-		instanceResource := DefaultResourceProperties{}
+
+		instanceResource := DefaultResourceProperties{
+			protected: instance.Settings.DeletionProtectionEnabled,
+		}
 		c.resourceMap.Store(instance.Name, instanceResource)
 	}
 	return c.ToSlice()
@@ -90,9 +93,27 @@ func (c *SqlInstances) Remove() error {
 	c.resourceMap.Range(func(key, value interface{}) bool {
 		instanceID := key.(string)
 		zone := value.(DefaultResourceProperties).zone
+		protected := value.(DefaultResourceProperties).protected
 
 		// Parallel instance deletion
 		errs.Go(func() error {
+			// Check if instance protection is enabled. If so, disable it.
+			if protected == true {
+				log.Printf("SQL instance %v has deletion protection enabled. Disabling", instanceID)
+				instanceCall := c.serviceClient.Instances.Get(c.base.config.Project, instanceID)
+				instance, err := instanceCall.Do()
+				if err != nil {
+					log.Fatal("Could not get CloudSQL instance %v", instanceID)
+				}
+
+				instance.Settings.DeletionProtectionEnabled = false
+				instanceUpdateCall := c.serviceClient.Instances.Update(c.base.config.Project, instance.Name, instance)
+				_, err = instanceUpdateCall.Do()
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+
 			deleteCall := c.serviceClient.Instances.Delete(c.base.config.Project, instanceID)
 			operation, err := deleteCall.Do()
 			if err != nil {

@@ -16,9 +16,10 @@ type ResourceBase struct {
 
 // DefaultResourceProperties -
 type DefaultResourceProperties struct {
-	project string
-	zone    string
-	region  string
+	project   string
+	zone      string
+	region    string
+	protected bool
 }
 
 // Resource -
