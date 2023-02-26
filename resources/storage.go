@@ -1,4 +1,4 @@
-package gcp
+package resources
 
 import (
 	"github.com/ianbrown78/gcp-nuke/config"

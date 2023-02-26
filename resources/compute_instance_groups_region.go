@@ -1,4 +1,4 @@
-package gcp
+package resources
 
 import (
 	"fmt"
@@ -13,8 +13,8 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
-// ComputeDisks -
-type ComputeDisks struct {
+// ComputeInstanceGroupsRegion -
+type ComputeInstanceGroupsRegion struct {
 	serviceClient *compute.Service
 	base          ResourceBase
 	resourceMap   syncmap.Map
@@ -25,51 +25,47 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	computeResource := ComputeDisks{
+	computeResource := ComputeInstanceGroupsRegion{
 		serviceClient: computeService,
 	}
 	register(&computeResource)
 }
 
-// Name - Name of the resourceLister for ComputeDisks
-func (c *ComputeDisks) Name() string {
-	return "ComputeDisks"
+// Name - Name of the resourceLister for ComputeInstanceGroupsRegion
+func (c *ComputeInstanceGroupsRegion) Name() string {
+	return "ComputeInstanceGroupsRegion"
 }
 
-// ToSlice - Name of the resourceLister for ComputeDisks
-func (c *ComputeDisks) ToSlice() (slice []string) {
+// ToSlice - Name of the resourceLister for ComputeInstanceGroupsRegion
+func (c *ComputeInstanceGroupsRegion) ToSlice() (slice []string) {
 	return helpers.SortedSyncMapKeys(&c.resourceMap)
 
 }
 
 // Setup - populates the struct
-func (c *ComputeDisks) Setup(config config.Config) {
+func (c *ComputeInstanceGroupsRegion) Setup(config config.Config) {
 	c.base.config = config
 
 }
 
-// List - Returns a list of all ComputeDisks
-func (c *ComputeDisks) List(refreshCache bool) []string {
+// List - Returns a list of all ComputeInstanceGroupsRegion
+func (c *ComputeInstanceGroupsRegion) List(refreshCache bool) []string {
 	if !refreshCache {
 		return c.ToSlice()
 	}
 	// Refresh resource map
 	c.resourceMap = sync.Map{}
 
-	for _, zone := range c.base.config.Zones {
-		instanceListCall := c.serviceClient.Disks.List(c.base.config.Project, zone)
+	for _, region := range c.base.config.Regions {
+		instanceListCall := c.serviceClient.RegionInstanceGroupManagers.List(c.base.config.Project, region)
 		instanceList, err := instanceListCall.Do()
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		for _, instance := range instanceList.Items {
-			// Don't delete any attached to instances - these are removed during instance deletion
-			if len(instance.Users) > 0 {
-				continue
-			}
 			instanceResource := DefaultResourceProperties{
-				zone: zone,
+				region: region,
 			}
 			c.resourceMap.Store(instance.Name, instanceResource)
 		}
@@ -78,23 +74,24 @@ func (c *ComputeDisks) List(refreshCache bool) []string {
 }
 
 // Dependencies - Returns a List of resource names to check for
-func (c *ComputeDisks) Dependencies() []string {
-	return []string{}
+func (c *ComputeInstanceGroupsRegion) Dependencies() []string {
+	a := ComputeRegionAutoScalers{}
+	return []string{a.Name()}
 }
 
 // Remove -
-func (c *ComputeDisks) Remove() error {
+func (c *ComputeInstanceGroupsRegion) Remove() error {
 
 	// Removal logic
 	errs, _ := errgroup.WithContext(c.base.config.Context)
 
 	c.resourceMap.Range(func(key, value interface{}) bool {
 		instanceID := key.(string)
-		zone := value.(DefaultResourceProperties).zone
+		region := value.(DefaultResourceProperties).region
 
 		// Parallel instance deletion
 		errs.Go(func() error {
-			deleteCall := c.serviceClient.Disks.Delete(c.base.config.Project, zone, instanceID)
+			deleteCall := c.serviceClient.RegionInstanceGroupManagers.Delete(c.base.config.Project, region, instanceID)
 			operation, err := deleteCall.Do()
 			if err != nil {
 				return err
@@ -102,9 +99,8 @@ func (c *ComputeDisks) Remove() error {
 			var opStatus string
 			seconds := 0
 			for opStatus != "DONE" {
-				log.Printf("[Info] Resource currently being deleted %v [type: %v project: %v zone: %v] (%v seconds)", instanceID, c.Name(), c.base.config.Project, zone, seconds)
-
-				operationCall := c.serviceClient.ZoneOperations.Get(c.base.config.Project, zone, operation.Name)
+				log.Printf("[Info] Resource currently being deleted %v [type: %v project: %v region: %v] (%v seconds)", instanceID, c.Name(), c.base.config.Project, region, seconds)
+				operationCall := c.serviceClient.RegionOperations.Get(c.base.config.Project, region, operation.Name)
 				checkOpp, err := operationCall.Do()
 				if err != nil {
 					return err
@@ -114,12 +110,12 @@ func (c *ComputeDisks) Remove() error {
 				time.Sleep(time.Duration(c.base.config.PollTime) * time.Second)
 				seconds += c.base.config.PollTime
 				if seconds > c.base.config.Timeout {
-					return fmt.Errorf("[Error] Resource deletion timed out for %v [type: %v project: %v zone: %v] (%v seconds)", instanceID, c.Name(), c.base.config.Project, zone, c.base.config.Timeout)
+					return fmt.Errorf("[Error] Resource deletion timed out for %v [type: %v project: %v region: %v] (%v seconds)", instanceID, c.Name(), c.base.config.Project, region, c.base.config.Timeout)
 				}
 			}
 			c.resourceMap.Delete(instanceID)
 
-			log.Printf("[Info] Resource deleted %v [type: %v project: %v zone: %v] (%v seconds)", instanceID, c.Name(), c.base.config.Project, zone, seconds)
+			log.Printf("[Info] Resource deleted %v [type: %v project: %v region: %v] (%v seconds)", instanceID, c.Name(), c.base.config.Project, region, seconds)
 			return nil
 		})
 		return true

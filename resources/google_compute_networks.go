@@ -1,4 +1,4 @@
-package gcp
+package resources
 
 import (
 	"fmt"
@@ -13,8 +13,8 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
-// ComputeNetworkPeerings -
-type ComputeNetworkPeerings struct {
+// ComputeNetworks -
+type ComputeNetworks struct {
 	serviceClient *compute.Service
 	base          ResourceBase
 	resourceMap   syncmap.Map
@@ -25,31 +25,31 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	computeResource := ComputeNetworkPeerings{
+	computeResource := ComputeNetworks{
 		serviceClient: computeService,
 	}
 	register(&computeResource)
 }
 
-// Name - Name of the resourceLister for ComputeNetworkPeerings
-func (c *ComputeNetworkPeerings) Name() string {
-	return "ComputeNetworkPeerings"
+// Name - Name of the resourceLister for ComputeNetworks
+func (c *ComputeNetworks) Name() string {
+	return "ComputeNetworks"
 }
 
-// ToSlice - Name of the resourceLister for ComputeNetworkPeerings
-func (c *ComputeNetworkPeerings) ToSlice() (slice []string) {
+// ToSlice - Name of the resourceLister for ComputeNetworks
+func (c *ComputeNetworks) ToSlice() (slice []string) {
 	return helpers.SortedSyncMapKeys(&c.resourceMap)
 
 }
 
 // Setup - populates the struct
-func (c *ComputeNetworkPeerings) Setup(config config.Config) {
+func (c *ComputeNetworks) Setup(config config.Config) {
 	c.base.config = config
 
 }
 
-// List - Returns a list of all ComputeNetworkPeerings
-func (c *ComputeNetworkPeerings) List(refreshCache bool) []string {
+// List - Returns a list of all ComputeNetworks
+func (c *ComputeNetworks) List(refreshCache bool) []string {
 	if !refreshCache {
 		return c.ToSlice()
 	}
@@ -63,37 +63,29 @@ func (c *ComputeNetworkPeerings) List(refreshCache bool) []string {
 	}
 
 	for _, network := range networkList.Items {
-		for _, networkPeering := range network.Peerings {
-			c.resourceMap.Store(networkPeering.Name, network.Name)
-		}
+		c.resourceMap.Store(network.Name, nil)
 	}
 	return c.ToSlice()
 }
 
 // Dependencies - Returns a List of resource names to check for
-func (c *ComputeNetworkPeerings) Dependencies() []string {
-	a := ComputeInstanceGroupsRegion{}
-	b := ComputeInstanceGroupsZone{}
-	cl := ContainerGKEClusters{}
-	return []string{a.Name(), b.Name(), cl.Name()}
+func (c *ComputeNetworks) Dependencies() []string {
+	a := ComputeSubnetworks{}
+	return []string{a.Name()}
 }
 
 // Remove -
-func (c *ComputeNetworkPeerings) Remove() error {
+func (c *ComputeNetworks) Remove() error {
 
 	// Removal logic
 	errs, _ := errgroup.WithContext(c.base.config.Context)
 
 	c.resourceMap.Range(func(key, value interface{}) bool {
-		networkPeeringID := key.(string)
-		networkID := value.(string)
+		networkID := key.(string)
 
 		// Parallel network deletion
 		errs.Go(func() error {
-
-			deleteCall := c.serviceClient.Networks.RemovePeering(c.base.config.Project, networkID, &compute.NetworksRemovePeeringRequest{
-				Name: networkPeeringID,
-			})
+			deleteCall := c.serviceClient.Networks.Delete(c.base.config.Project, networkID)
 			operation, err := deleteCall.Do()
 			if err != nil {
 				return err

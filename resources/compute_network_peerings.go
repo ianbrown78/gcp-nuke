@@ -1,4 +1,4 @@
-package gcp
+package resources
 
 import (
 	"fmt"
@@ -13,8 +13,8 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
-// ComputeInstanceTemplates -
-type ComputeInstanceTemplates struct {
+// ComputeNetworkPeerings -
+type ComputeNetworkPeerings struct {
 	serviceClient *compute.Service
 	base          ResourceBase
 	resourceMap   syncmap.Map
@@ -25,52 +25,53 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	computeResource := ComputeInstanceTemplates{
+	computeResource := ComputeNetworkPeerings{
 		serviceClient: computeService,
 	}
 	register(&computeResource)
 }
 
-// Name - Name of the resourceLister for ComputeInstanceTemplates
-func (c *ComputeInstanceTemplates) Name() string {
-	return "ComputeInstanceTemplates"
+// Name - Name of the resourceLister for ComputeNetworkPeerings
+func (c *ComputeNetworkPeerings) Name() string {
+	return "ComputeNetworkPeerings"
 }
 
-// ToSlice - Name of the resourceLister for ComputeInstanceTemplates
-func (c *ComputeInstanceTemplates) ToSlice() (slice []string) {
+// ToSlice - Name of the resourceLister for ComputeNetworkPeerings
+func (c *ComputeNetworkPeerings) ToSlice() (slice []string) {
 	return helpers.SortedSyncMapKeys(&c.resourceMap)
 
 }
 
 // Setup - populates the struct
-func (c *ComputeInstanceTemplates) Setup(config config.Config) {
+func (c *ComputeNetworkPeerings) Setup(config config.Config) {
 	c.base.config = config
 
 }
 
-// List - Returns a list of all ComputeInstanceTemplates
-func (c *ComputeInstanceTemplates) List(refreshCache bool) []string {
+// List - Returns a list of all ComputeNetworkPeerings
+func (c *ComputeNetworkPeerings) List(refreshCache bool) []string {
 	if !refreshCache {
 		return c.ToSlice()
 	}
 	// Refresh resource map
 	c.resourceMap = sync.Map{}
 
-	instanceListCall := c.serviceClient.InstanceTemplates.List(c.base.config.Project)
-	instanceList, err := instanceListCall.Do()
+	networkListCall := c.serviceClient.Networks.List(c.base.config.Project)
+	networkList, err := networkListCall.Do()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, instance := range instanceList.Items {
-		instanceResource := DefaultResourceProperties{}
-		c.resourceMap.Store(instance.Name, instanceResource)
+	for _, network := range networkList.Items {
+		for _, networkPeering := range network.Peerings {
+			c.resourceMap.Store(networkPeering.Name, network.Name)
+		}
 	}
 	return c.ToSlice()
 }
 
 // Dependencies - Returns a List of resource names to check for
-func (c *ComputeInstanceTemplates) Dependencies() []string {
+func (c *ComputeNetworkPeerings) Dependencies() []string {
 	a := ComputeInstanceGroupsRegion{}
 	b := ComputeInstanceGroupsZone{}
 	cl := ContainerGKEClusters{}
@@ -78,17 +79,21 @@ func (c *ComputeInstanceTemplates) Dependencies() []string {
 }
 
 // Remove -
-func (c *ComputeInstanceTemplates) Remove() error {
+func (c *ComputeNetworkPeerings) Remove() error {
 
 	// Removal logic
 	errs, _ := errgroup.WithContext(c.base.config.Context)
 
 	c.resourceMap.Range(func(key, value interface{}) bool {
-		instanceID := key.(string)
+		networkPeeringID := key.(string)
+		networkID := value.(string)
 
-		// Parallel instance deletion
+		// Parallel network deletion
 		errs.Go(func() error {
-			deleteCall := c.serviceClient.InstanceTemplates.Delete(c.base.config.Project, instanceID)
+
+			deleteCall := c.serviceClient.Networks.RemovePeering(c.base.config.Project, networkID, &compute.NetworksRemovePeeringRequest{
+				Name: networkPeeringID,
+			})
 			operation, err := deleteCall.Do()
 			if err != nil {
 				return err
@@ -96,7 +101,8 @@ func (c *ComputeInstanceTemplates) Remove() error {
 			var opStatus string
 			seconds := 0
 			for opStatus != "DONE" {
-				log.Printf("[Info] Resource currently being deleted %v [type: %v project: %v] (%v seconds)", instanceID, c.Name(), c.base.config.Project, seconds)
+				log.Printf("[Info] Resource currently being deleted %v [type: %v project: %v] (%v seconds)", networkID, c.Name(), c.base.config.Project, seconds)
+
 				operationCall := c.serviceClient.GlobalOperations.Get(c.base.config.Project, operation.Name)
 				checkOpp, err := operationCall.Do()
 				if err != nil {
@@ -107,12 +113,12 @@ func (c *ComputeInstanceTemplates) Remove() error {
 				time.Sleep(time.Duration(c.base.config.PollTime) * time.Second)
 				seconds += c.base.config.PollTime
 				if seconds > c.base.config.Timeout {
-					return fmt.Errorf("[Error] Resource deletion timed out for %v [type: %v project: %v] (%v seconds)", instanceID, c.Name(), c.base.config.Project, c.base.config.Timeout)
+					return fmt.Errorf("[Error] Resource deletion timed out for %v [type: %v project: %v] (%v seconds)", networkID, c.Name(), c.base.config.Project, c.base.config.Timeout)
 				}
 			}
-			c.resourceMap.Delete(instanceID)
+			c.resourceMap.Delete(networkID)
 
-			log.Printf("[Info] Resource deleted %v [type: %v project: %v] (%v seconds)", instanceID, c.Name(), c.base.config.Project, seconds)
+			log.Printf("[Info] Resource deleted %v [type: %v project: %v] (%v seconds)", networkID, c.Name(), c.base.config.Project, seconds)
 			return nil
 		})
 		return true

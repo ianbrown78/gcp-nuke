@@ -1,4 +1,4 @@
-package gcp
+package resources
 
 import (
 	"fmt"
@@ -13,8 +13,8 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
-// ComputeVPNGateways -
-type ComputeVPNGateways struct {
+// ComputeVPNTunnels -
+type ComputeVPNTunnels struct {
 	serviceClient *compute.Service
 	base          ResourceBase
 	resourceMap   syncmap.Map
@@ -25,31 +25,31 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	computeResource := ComputeVPNGateways{
+	computeResource := ComputeVPNTunnels{
 		serviceClient: computeService,
 	}
 	register(&computeResource)
 }
 
-// Name - Name of the resourceLister for ComputeVPNGateways
-func (c *ComputeVPNGateways) Name() string {
-	return "ComputeVPNGateways"
+// Name - Name of the resourceLister for ComputeVPNTunnels
+func (c *ComputeVPNTunnels) Name() string {
+	return "ComputeVPNTunnels"
 }
 
-// ToSlice - Name of the resourceLister for ComputeVPNGateways
-func (c *ComputeVPNGateways) ToSlice() (slice []string) {
+// ToSlice - Name of the resourceLister for ComputeVPNTunnels
+func (c *ComputeVPNTunnels) ToSlice() (slice []string) {
 	return helpers.SortedSyncMapKeys(&c.resourceMap)
 
 }
 
 // Setup - populates the struct
-func (c *ComputeVPNGateways) Setup(config config.Config) {
+func (c *ComputeVPNTunnels) Setup(config config.Config) {
 	c.base.config = config
 
 }
 
-// List - Returns a list of all ComputeVPNGateways
-func (c *ComputeVPNGateways) List(refreshCache bool) []string {
+// List - Returns a list of all ComputeVPNTunnels
+func (c *ComputeVPNTunnels) List(refreshCache bool) []string {
 	if !refreshCache {
 		return c.ToSlice()
 	}
@@ -57,38 +57,37 @@ func (c *ComputeVPNGateways) List(refreshCache bool) []string {
 	c.resourceMap = sync.Map{}
 
 	for _, region := range c.base.config.Regions {
-		gatewayListCall := c.serviceClient.VpnGateways.List(c.base.config.Project, region)
-		gatewayList, err := gatewayListCall.Do()
+		tunnelListCall := c.serviceClient.VpnTunnels.List(c.base.config.Project, region)
+		tunnelList, err := tunnelListCall.Do()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		for _, gateway := range gatewayList.Items {
-			c.resourceMap.Store(gateway.Name, region)
+		for _, tunnel := range tunnelList.Items {
+			c.resourceMap.Store(tunnel.Name, region)
 		}
 	}
 	return c.ToSlice()
 }
 
 // Dependencies - Returns a List of resource names to check for
-func (c *ComputeVPNGateways) Dependencies() []string {
-	a := ComputeVPNTunnels{}
-	return []string{a.Name()}
+func (c *ComputeVPNTunnels) Dependencies() []string {
+	return []string{}
 }
 
 // Remove -
-func (c *ComputeVPNGateways) Remove() error {
+func (c *ComputeVPNTunnels) Remove() error {
 
 	// Removal logic
 	errs, _ := errgroup.WithContext(c.base.config.Context)
 
 	c.resourceMap.Range(func(key, value interface{}) bool {
-		gatewayID := key.(string)
+		tunnelID := key.(string)
 		region := value.(string)
 
-		// Parallel gateway deletion
+		// Parallel tunnel deletion
 		errs.Go(func() error {
-			deleteCall := c.serviceClient.VpnGateways.Delete(c.base.config.Project, region, gatewayID)
+			deleteCall := c.serviceClient.VpnTunnels.Delete(c.base.config.Project, region, tunnelID)
 			operation, err := deleteCall.Do()
 			if err != nil {
 				return err
@@ -96,7 +95,7 @@ func (c *ComputeVPNGateways) Remove() error {
 			var opStatus string
 			seconds := 0
 			for opStatus != "DONE" {
-				log.Printf("[Info] Resource currently being deleted %v [type: %v project: %v] (%v seconds)", gatewayID, c.Name(), c.base.config.Project, seconds)
+				log.Printf("[Info] Resource currently being deleted %v [type: %v project: %v] (%v seconds)", tunnelID, c.Name(), c.base.config.Project, seconds)
 
 				operationCall := c.serviceClient.RegionOperations.Get(c.base.config.Project, region, operation.Name)
 				checkOpp, err := operationCall.Do()
@@ -108,12 +107,12 @@ func (c *ComputeVPNGateways) Remove() error {
 				time.Sleep(time.Duration(c.base.config.PollTime) * time.Second)
 				seconds += c.base.config.PollTime
 				if seconds > c.base.config.Timeout {
-					return fmt.Errorf("[Error] Resource deletion timed out for %v [type: %v project: %v] (%v seconds)", gatewayID, c.Name(), c.base.config.Project, c.base.config.Timeout)
+					return fmt.Errorf("[Error] Resource deletion timed out for %v [type: %v project: %v] (%v seconds)", tunnelID, c.Name(), c.base.config.Project, c.base.config.Timeout)
 				}
 			}
-			c.resourceMap.Delete(gatewayID)
+			c.resourceMap.Delete(tunnelID)
 
-			log.Printf("[Info] Resource deleted %v [type: %v project: %v] (%v seconds)", gatewayID, c.Name(), c.base.config.Project, seconds)
+			log.Printf("[Info] Resource deleted %v [type: %v project: %v] (%v seconds)", tunnelID, c.Name(), c.base.config.Project, seconds)
 			return nil
 		})
 		return true

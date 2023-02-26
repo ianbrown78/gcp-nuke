@@ -1,4 +1,4 @@
-package gcp
+package resources
 
 import (
 	"fmt"
@@ -13,8 +13,8 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
-// ComputeSubnetworks -
-type ComputeSubnetworks struct {
+// ComputeVPNGateways -
+type ComputeVPNGateways struct {
 	serviceClient *compute.Service
 	base          ResourceBase
 	resourceMap   syncmap.Map
@@ -25,31 +25,31 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	computeResource := ComputeSubnetworks{
+	computeResource := ComputeVPNGateways{
 		serviceClient: computeService,
 	}
 	register(&computeResource)
 }
 
-// Name - Name of the resourceLister for ComputeSubnetworks
-func (c *ComputeSubnetworks) Name() string {
-	return "ComputeSubnetworks"
+// Name - Name of the resourceLister for ComputeVPNGateways
+func (c *ComputeVPNGateways) Name() string {
+	return "ComputeVPNGateways"
 }
 
-// ToSlice - Name of the resourceLister for ComputeSubnetworks
-func (c *ComputeSubnetworks) ToSlice() (slice []string) {
+// ToSlice - Name of the resourceLister for ComputeVPNGateways
+func (c *ComputeVPNGateways) ToSlice() (slice []string) {
 	return helpers.SortedSyncMapKeys(&c.resourceMap)
 
 }
 
 // Setup - populates the struct
-func (c *ComputeSubnetworks) Setup(config config.Config) {
+func (c *ComputeVPNGateways) Setup(config config.Config) {
 	c.base.config = config
 
 }
 
-// List - Returns a list of all ComputeSubnetworks
-func (c *ComputeSubnetworks) List(refreshCache bool) []string {
+// List - Returns a list of all ComputeVPNGateways
+func (c *ComputeVPNGateways) List(refreshCache bool) []string {
 	if !refreshCache {
 		return c.ToSlice()
 	}
@@ -57,40 +57,38 @@ func (c *ComputeSubnetworks) List(refreshCache bool) []string {
 	c.resourceMap = sync.Map{}
 
 	for _, region := range c.base.config.Regions {
-		subnetworkListCall := c.serviceClient.Subnetworks.List(c.base.config.Project, region)
-		subnetworkList, err := subnetworkListCall.Do()
+		gatewayListCall := c.serviceClient.VpnGateways.List(c.base.config.Project, region)
+		gatewayList, err := gatewayListCall.Do()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		for _, subnetwork := range subnetworkList.Items {
-			c.resourceMap.Store(subnetwork.Name, region)
+		for _, gateway := range gatewayList.Items {
+			c.resourceMap.Store(gateway.Name, region)
 		}
 	}
 	return c.ToSlice()
 }
 
 // Dependencies - Returns a List of resource names to check for
-func (c *ComputeSubnetworks) Dependencies() []string {
-	a := ComputeInstanceGroupsRegion{}
-	b := ComputeInstanceGroupsZone{}
-	cl := ContainerGKEClusters{}
-	return []string{a.Name(), b.Name(), cl.Name()}
+func (c *ComputeVPNGateways) Dependencies() []string {
+	a := ComputeVPNTunnels{}
+	return []string{a.Name()}
 }
 
 // Remove -
-func (c *ComputeSubnetworks) Remove() error {
+func (c *ComputeVPNGateways) Remove() error {
 
 	// Removal logic
 	errs, _ := errgroup.WithContext(c.base.config.Context)
 
 	c.resourceMap.Range(func(key, value interface{}) bool {
-		subnetworkID := key.(string)
+		gatewayID := key.(string)
 		region := value.(string)
 
-		// Parallel subnetwork deletion
+		// Parallel gateway deletion
 		errs.Go(func() error {
-			deleteCall := c.serviceClient.Subnetworks.Delete(c.base.config.Project, region, subnetworkID)
+			deleteCall := c.serviceClient.VpnGateways.Delete(c.base.config.Project, region, gatewayID)
 			operation, err := deleteCall.Do()
 			if err != nil {
 				return err
@@ -98,7 +96,7 @@ func (c *ComputeSubnetworks) Remove() error {
 			var opStatus string
 			seconds := 0
 			for opStatus != "DONE" {
-				log.Printf("[Info] Resource currently being deleted %v [type: %v project: %v] (%v seconds)", subnetworkID, c.Name(), c.base.config.Project, seconds)
+				log.Printf("[Info] Resource currently being deleted %v [type: %v project: %v] (%v seconds)", gatewayID, c.Name(), c.base.config.Project, seconds)
 
 				operationCall := c.serviceClient.RegionOperations.Get(c.base.config.Project, region, operation.Name)
 				checkOpp, err := operationCall.Do()
@@ -110,12 +108,12 @@ func (c *ComputeSubnetworks) Remove() error {
 				time.Sleep(time.Duration(c.base.config.PollTime) * time.Second)
 				seconds += c.base.config.PollTime
 				if seconds > c.base.config.Timeout {
-					return fmt.Errorf("[Error] Resource deletion timed out for %v [type: %v project: %v] (%v seconds)", subnetworkID, c.Name(), c.base.config.Project, c.base.config.Timeout)
+					return fmt.Errorf("[Error] Resource deletion timed out for %v [type: %v project: %v] (%v seconds)", gatewayID, c.Name(), c.base.config.Project, c.base.config.Timeout)
 				}
 			}
-			c.resourceMap.Delete(subnetworkID)
+			c.resourceMap.Delete(gatewayID)
 
-			log.Printf("[Info] Resource deleted %v [type: %v project: %v] (%v seconds)", subnetworkID, c.Name(), c.base.config.Project, seconds)
+			log.Printf("[Info] Resource deleted %v [type: %v project: %v] (%v seconds)", gatewayID, c.Name(), c.base.config.Project, seconds)
 			return nil
 		})
 		return true
