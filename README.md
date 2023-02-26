@@ -1,9 +1,9 @@
 # gcp-nuke
 
-![Build Status](https://github.com/ianbrown78/gcp-nuke/workflows/Golang%20CI/badge.svg?branch=main)
-[![license](https://img.shields.io/github/license/ianbrown78/gcp-nuke.svg)](https://github.com/ianbrown78/gcp-nuke/blob/main/LICENSE)
+![Build Status](https://github.com/ianbrown78/gcp-nuke/workflows/ci.yaml/badge.svg?branch=master)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/ianbrown78/gcp-nuke/blob/master/LICENSE)
 [![GitHub release](https://img.shields.io/github/release/ianbrown78/gcp-nuke.svg)](https://github.com/ianbrown78/gcp-nuke/releases)
-[![Docker Hub](https://img.shields.io/docker/pulls/ianbrown78/gcp-nuke)](https://hub.docker.com/r/ianbrown78/gcp-nuke)
+[![Docker Hub](https://img.shields.io/docker/pulls/ianbrown78/gcp-nuke)](https://hub.docker.com/repository/docker/ianbrown78/gcp-nuke)
 
 Remove all resources from a GCP account.
 
