@@ -7,7 +7,6 @@ import (
 // Config -
 type Config struct {
 	Project       string
-	Credentials   string
 	Zones         []string
 	Regions       []string
 	Timeout       int
