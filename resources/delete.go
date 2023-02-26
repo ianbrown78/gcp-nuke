@@ -1,4 +1,4 @@
-package gcp
+package resources
 
 import (
 	"fmt"
@@ -9,10 +9,11 @@ import (
 	"github.com/ianbrown78/gcp-nuke/config"
 	"github.com/ianbrown78/gcp-nuke/helpers"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/api/cloudresourcemanager/v3"
 )
 
-// RemoveProject  -
-func RemoveProject(config config.Config) {
+// RemoveProjectResources  -
+func RemoveProjectResources(config config.Config) {
 	helpers.SetupCloseHandler()
 	resourceMap := GetResourceMap(config)
 
@@ -34,6 +35,15 @@ func RemoveProject(config config.Config) {
 			}
 
 			parallelDryRun(resourceMap, resource, config)
+
+			if config.NoKeepProject {
+				err := deleteProject(config)
+
+				if err != nil {
+					return err
+				}
+			}
+
 			return nil
 		})
 	}
@@ -43,7 +53,7 @@ func RemoveProject(config config.Config) {
 		log.Fatal(err)
 	}
 
-	log.Printf("-- Deletion complete for project %v (dry-run: %v) (keep-project: %v) --\n", config.Project, config.NoDryRun, config.KeepProject)
+	log.Printf("-- Deletion complete for project %v (dry-run: %v) (keep-project: %v) --\n", config.Project, config.NoDryRun, config.NoKeepProject)
 }
 
 func parallelResourceDeletion(resourceMap map[string]Resource, resource Resource, config config.Config) error {
@@ -100,6 +110,48 @@ func parallelResourceDeletion(resourceMap map[string]Resource, resource Resource
 	}
 
 	return err
+}
+
+func deleteProject(config config.Config) error {
+	ctx := config.Context
+	client, err := cloudresourcemanager.NewService(ctx)
+	if err != nil {
+		return err
+	}
+
+	deleteProjectCall := client.Projects.Delete(config.Project)
+	deleteProject, err := deleteProjectCall.Do()
+
+	if err != nil {
+		return err
+	}
+
+	var updateOpStatus string
+	seconds := 0
+	for updateOpStatus != "DONE" {
+		log.Printf("[Info] Removing project %v (%v seconds)", config.Project, seconds)
+
+		operationCall := client.Operations.Get(deleteProject.Name)
+		checkOpp, err := operationCall.Do()
+		if err != nil {
+			return err
+		}
+
+		if checkOpp.Done == true {
+			updateOpStatus = "DONE"
+		} else {
+			updateOpStatus = "RUNNING"
+		}
+
+		time.Sleep(time.Duration(config.PollTime) * time.Second)
+		seconds += config.PollTime
+		if seconds > config.Timeout {
+			return fmt.Errorf("[Error] Project removal timed out for %v (%v seconds)", config.Project, config.Timeout)
+		}
+	}
+	log.Printf("[Info] Project removal completed for %v (%v seconds)", config.Project, seconds)
+
+	return nil
 }
 
 // apiErrorCheck - Not proud of this workaround for the inconsistent api timings, suggestions welcome
