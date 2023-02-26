@@ -6,12 +6,13 @@ import (
 
 // Config -
 type Config struct {
-	Project     string
-	Zones       []string
-	Regions     []string
-	Timeout     int
-	PollTime    int
-	Context     context.Context
-	NoDryRun    bool
-	KeepProject bool
+	Project       string
+	Credentials   string
+	Zones         []string
+	Regions       []string
+	Timeout       int
+	PollTime      int
+	Context       context.Context
+	NoDryRun      bool
+	NoKeepProject bool
 }
