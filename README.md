@@ -1,6 +1,6 @@
 # gcp-nuke
 
-![Build Status](https://github.com/ianbrown78/gcp-nuke/actions/workflows/Golang%20CI/badge.svg?branch=master)
+![Build Status](https://github.com/ianbrown78/gcp-nuke/actions/workflows/Golang%20CI/badge.svg)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/ianbrown78/gcp-nuke/blob/master/LICENSE)
 [![GitHub release](https://img.shields.io/github/release/ianbrown78/gcp-nuke.svg)](https://github.com/ianbrown78/gcp-nuke/releases)
 [![Docker Hub](https://img.shields.io/docker/pulls/ianbrown78/gcp-nuke)](https://hub.docker.com/repository/docker/ianbrown78/gcp-nuke)
